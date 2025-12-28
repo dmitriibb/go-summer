@@ -23,46 +23,22 @@ func (receiver *autowireSpec) Type() reflect.Type {
 }
 
 func (receiver *autowireSpec) Inject(pebble Pebble) {
-	if !receiver.fieldValue.IsValid() || !receiver.fieldValue.CanSet() {
-		return
-	}
-
 	pebbleValue := reflect.ValueOf(pebble)
 	fieldType := receiver.fieldValue.Type()
 
-	// Handle pointer fields
-	if fieldType.Kind() == reflect.Ptr {
-		elemType := fieldType.Elem()
+	// Check if pebble implements the required type
+	if !pebbleValue.Type().Implements(receiver.ttype) {
+		return
+	}
 
-		// Check if pebble implements the interface type (for interface fields like *writer.Writer)
-		if elemType.Kind() == reflect.Interface {
-			// Field is *Interface, pebble implements Interface
-			if pebbleValue.Type().Implements(elemType) {
-				// Create a new pointer to the interface and set it
-				ptr := reflect.New(elemType)
-				ptr.Elem().Set(pebbleValue)
-				receiver.fieldValue.Set(ptr)
-			}
-		} else if pebbleValue.Type().AssignableTo(elemType) {
-			// Field is *T, pebble is T - create a pointer
-			ptr := reflect.New(pebbleValue.Type())
-			ptr.Elem().Set(pebbleValue)
-			receiver.fieldValue.Set(ptr)
-		} else if pebbleValue.Type().AssignableTo(fieldType) {
-			// Field is *T, pebble is *T - direct assignment
-			receiver.fieldValue.Set(pebbleValue)
-		}
+	// If field is a pointer, create a pointer to the interface type
+	if fieldType.Kind() == reflect.Ptr {
+		ptr := reflect.New(receiver.ttype)
+		ptr.Elem().Set(pebbleValue)
+		receiver.fieldValue.Set(ptr)
 	} else {
-		// Handle non-pointer fields
-		if fieldType.Kind() == reflect.Interface {
-			// Field is Interface, pebble implements Interface
-			if pebbleValue.Type().Implements(fieldType) {
-				receiver.fieldValue.Set(pebbleValue)
-			}
-		} else if pebbleValue.Type().AssignableTo(fieldType) {
-			// Direct assignment if types match
-			receiver.fieldValue.Set(pebbleValue)
-		}
+		// Field is not a pointer, set directly
+		receiver.fieldValue.Set(pebbleValue)
 	}
 }
 
@@ -75,11 +51,12 @@ func NewAutowireSpec(fieldPtr interface{}) AutowireSpec {
 		panic("NewAutowireSpec: fieldPtr must be a pointer to the field")
 	}
 
-	// Get the actual field value (dereference the pointer)
+	// Get the actual field value (dereference the pointer we passed: &field -> field)
 	fieldValue = fieldValue.Elem()
 
 	// Get the type of the field (what type we're looking for to inject)
 	ttype := fieldValue.Type()
+	// If the field itself is a pointer type (e.g., *writer.Writer), get the element type (writer.Writer)
 	if ttype.Kind() == reflect.Ptr {
 		ttype = ttype.Elem()
 	}
