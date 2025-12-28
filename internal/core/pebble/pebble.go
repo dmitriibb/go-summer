@@ -15,6 +15,18 @@ type pebbleMetadata struct {
 	ready  bool
 }
 
+func NewMetadata(pebble *interface{}, types ...reflect.Type) Metadata {
+	pType := reflect.TypeOf(pebble)
+	if pType.Kind() == reflect.Ptr {
+		pType = pType.Elem()
+	}
+	return &pebbleMetadata{
+		name:   pType.Name(),
+		ttypes: types,
+		ready:  false,
+	}
+}
+
 func (p *pebbleMetadata) Name() string {
 	return p.name
 }

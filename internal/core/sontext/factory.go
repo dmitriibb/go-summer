@@ -21,7 +21,7 @@ type pebbleBuildingWrapper struct {
 	autowireSpecs []pebble.AutowireSpec
 }
 
-func register(p pebble.Pebble) {
+func Register(p pebble.Pebble) {
 	if p == nil {
 		return
 	}
@@ -42,9 +42,11 @@ func register(p pebble.Pebble) {
 	}
 }
 
-func build(p pebble.Pebble, autowireSpecs ...pebble.AutowireSpec) {
+func Build(p pebble.Pebble, autowireSpecs ...pebble.AutowireSpec) {
 	bw := &pebbleBuildingWrapper{p, autowireSpecs}
 	sontextVal.buildingWrappers = append(sontextVal.buildingWrappers, bw)
+
+	buildAllPebbles()
 }
 
 func buildAllPebbles() {
