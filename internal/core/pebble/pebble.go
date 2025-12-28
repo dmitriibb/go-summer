@@ -46,3 +46,10 @@ func (p *pebbleMetadata) Ready() {
 type Pebble interface {
 	Metadata() Metadata
 }
+
+// TypeOf returns the reflect.Type of the interface type T.
+// This is a convenience function to avoid writing reflect.TypeOf((*T)(nil)).Elem().
+// Usage: pebble.TypeOf[Writer]() instead of reflect.TypeOf((*Writer)(nil)).Elem()
+func TypeOf[T any]() reflect.Type {
+	return reflect.TypeOf((*T)(nil)).Elem()
+}

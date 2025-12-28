@@ -14,24 +14,24 @@ type DataGenerator interface {
 
 type dataGenerator struct {
 	output writer.Writer
-	p pebble.Metadata
+	p      pebble.Metadata
 }
 
 func NewDataGenerator() DataGenerator {
 	dg := &dataGenerator{}
-	dg.p = pebble.NewMetadata(dg)
+	var dgInterface interface{} = dg
+	dg.p = pebble.NewMetadata(&dgInterface, pebble.TypeOf[DataGenerator]())
 
-	sontext.Build(dg, pebble.NewAutowireSpec(&dg.output)
-		)
+	sontext.Build(dg, pebble.NewAutowireSpec(&dg.output))
 
 	return dg
 }
 
-func (dg *dataGenerator) Metadata() pebble.Metadata  {
+func (dg *dataGenerator) Metadata() pebble.Metadata {
 	return dg.p
 }
 
-func (d *dataGenerator) Generate()  {
+func (d *dataGenerator) Generate() {
 	for i := 0; i < 10; i++ {
 		d.output.Write(fmt.Sprintf("message - %v", i))
 	}

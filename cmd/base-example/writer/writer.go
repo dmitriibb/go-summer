@@ -2,7 +2,6 @@ package writer
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/go-summer/internal/core/pebble"
 	"github.com/go-summer/internal/core/sontext"
@@ -19,8 +18,9 @@ type writerImpl struct {
 
 func NewPebble(prefix string) {
 	w := writerImpl{prefix: prefix}
-	w.p = pebble.NewMetadata(&w, Writer)
-	sontext.Register(w)
+	var wInterface interface{} = &w
+	w.p = pebble.NewMetadata(&wInterface, pebble.TypeOf[Writer]())
+	sontext.Register(&w)
 }
 
 func (w writerImpl) Metadata() pebble.Metadata {
@@ -28,5 +28,5 @@ func (w writerImpl) Metadata() pebble.Metadata {
 }
 
 func (w writerImpl) Write(message string) {
-	fmt.Printf("%s: %s", w.prefix, message)
+	fmt.Printf("%s: %s\n", w.prefix, message)
 }
